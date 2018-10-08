@@ -1,6 +1,6 @@
 """
 SPEC:
-A product is consist of multiple components, each components are a product itself
+A product is consist of multiple components, each component is a product itself
 There are 2 kinds of products:
 1) stockable:
    a stockable product has 2 quantities: in stock qty; manufacture qty
@@ -44,7 +44,6 @@ D) S1 is made of S2; S2 is made of S3
    S2   5           3
    S3   3           0
 """
-
 class Product:
     def __init__(self, name, type='stock', on_hand=0.0):
         self.name = name
@@ -59,9 +58,9 @@ class Product:
 
 # products_qty is a dictionary that holds all on hand qty of involved products
 # not including the root
-# [update] modify this so that it only includes restriction products
-# if a component is made of consumable only or it's children are made of consumable only
-# we will not include it in the product_qty_list at all
+# [update] products_qty only includes restriction products
+# if a component is made of consumable only or its children are made of consumable only
+# we will not include it in the products_qty at all
 def is_made_of_stockable(product):
     if product.type != 'stock':
         return False
@@ -88,12 +87,9 @@ def can_make(product, n, products_qty):
         if not product.components:
             return False
         next_layers = []
-
         # we only care about restriction components
         # if a component is a consumable or it is only made of consumable, it won't even show up in products_qty:
         restriction_components = [c for c in product.components if c in products_qty.keys()]
-        # print(restriction_components)
-
         for component in restriction_components:
             if products_qty[component] >= product.components[component]:
                 # if we have enough on hand
@@ -118,7 +114,6 @@ def compute_manufacture_qty(product):
     while can_make(product, 1, products_qty):
         count += 1
     return count
-
 
 ################################# TEST ######################################
 
@@ -191,7 +186,6 @@ class TestBom(unittest.TestCase):
         s4.components = {s5: 1.0, c1: 2.0}
         s1.manufacture_qty = compute_manufacture_qty(s1)
         self.assertEqual(s1.manufacture_qty, 1)
-
 
 if __name__ == '__main__':
     unittest.main()
