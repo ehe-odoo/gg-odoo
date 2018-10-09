@@ -1,3 +1,4 @@
+import sys
 """
 SPEC:
 A product is consist of multiple components, each component is a product itself
@@ -113,6 +114,8 @@ def compute_manufacture_qty(product):
     count = 0
     while can_make(product, 1, products_qty):
         count += 1
+        if count >= sys.maxsize:
+            break
     return count
 
 ################################# TEST ######################################
