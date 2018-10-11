@@ -167,7 +167,7 @@ class TestBom(unittest.TestCase):
     #
     #      on hand     manufacture
     # s1   0           1
-    # s2   1           1
+    # s2   1           2
     # s3   2           inf
     # s4   3           1
     # s5   1           0
