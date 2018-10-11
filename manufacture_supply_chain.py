@@ -82,29 +82,27 @@ def get_products_qty(product):
     return dic
 
 def can_make(product, n, products_qty):
-    count = 0
-    while count < n:
-        # if there is no components at all, we can't make any
-        if not product.components:
-            return False
-        next_layers = []
-        # we only care about restriction components
-        # if a component is a consumable or it is only made of consumable, it won't even show up in products_qty:
-        restriction_components = [c for c in product.components if c in products_qty.keys()]
-        for component in restriction_components:
-            if products_qty[component] >= product.components[component]:
-                # if we have enough on hand
-                products_qty[component] -= product.components[component]
-            else:
-                # if there is possibility that it can be manufactured, then we calc this later
-                next_layers.append((component, product.components[component] - products_qty[component]))
-                products_qty[component] = 0.0
+    # if there is no components at all, we can't make any
+    if not product.components:
+        return False
+    next_layers = []
+    # we only care about restriction components
+    # if a component is a consumable or it is only made of consumable, it won't even show up in products_qty:
+    restriction_components = [c for c in product.components if c in products_qty.keys()]
+    for component in restriction_components:
+        if products_qty[component] >= product.components[component] * n:
+            # if we have enough on hand
+            products_qty[component] -= product.components[component] * n
+        else:
+            # if there is possibility that it can be manufactured, then we calc this later
+            next_layers.append((component, product.components[component] * n - products_qty[component]))
+            products_qty[component] = 0.0
 
-        # now it's time to calc the next layer if there is any
-        for c, need_n in next_layers:
-            if not can_make(c, need_n, products_qty):
-                return False
-        count += 1
+    # now it's time to calc the next layer if there is any
+    for c, need_n in next_layers:
+        if not can_make(c, need_n, products_qty):
+            return False
+
     return True
 
 def compute_manufacture_qty(product):
