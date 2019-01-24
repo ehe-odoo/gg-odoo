@@ -45,6 +45,8 @@ D) S1 is made of S2; S2 is made of S3
    S2   5           3
    S3   3           0
 """
+
+
 class Product:
     def __init__(self, name, type='stock', on_hand=0.0):
         self.name = name
@@ -70,6 +72,7 @@ def is_made_of_stockable(product):
     else:
         return any([is_made_of_stockable(c) for c in product.components])
 
+
 def get_products_qty(product):
     def get_products_qty_helper(product, dic):
         for component in product.components.keys():
@@ -80,6 +83,7 @@ def get_products_qty(product):
     dic = {}
     get_products_qty_helper(product, dic)
     return dic
+
 
 def can_make(product, n, products_qty):
     # if there is no components at all, we can't make any
@@ -105,26 +109,58 @@ def can_make(product, n, products_qty):
 
     return True
 
+
+def compute_manufactury_qty_helper(product, products_qty, count, step):
+    # base case
+    if step < 1:
+        return count
+
+    # prepare for rollback
+    products_qty_copy = products_qty.copy()
+
+    if can_make(product, step, products_qty):
+        return compute_manufactury_qty_helper(product, products_qty, count + step, step * 2)
+    else:
+        return compute_manufactury_qty_helper(product, products_qty_copy, count, step // 2)
+
+
 def compute_manufacture_qty(product):
     if not is_made_of_stockable(product):
         return 'inf'
     products_qty = get_products_qty(product)
     count = 0
-    while can_make(product, 1, products_qty):
-        count += 1
-        if count >= sys.maxsize:
-            break
-    return count
+    step = 1
+
+    # old brute force
+    # while can_make(product, 1, products_qty):
+    #     count += 1
+    #     if count >= sys.maxsize:
+    #         break
+    return compute_manufactury_qty_helper(product, products_qty, count, step)
+
+
 
 ################################# TEST ######################################
 
 import unittest
+
 
 class TestBom(unittest.TestCase):
 
     # sanity
     # def test_sanity(self):
     #     self.assertEqual('foo'.upper(), 'FOO')
+
+    # S1 is made of S2
+    #      on hand     manufacture
+    # S1   0           1
+    # S2   1           0
+    def test_basic(self):
+        s2 = Product('s2', type='stock', on_hand=1.0)
+        s1 = Product('s1', type='stock')
+        s1.components = {s2: 1.0}
+        s1.manufacture_qty = compute_manufacture_qty(s1)
+        self.assertEqual(s1.manufacture_qty, 1.0)
 
     # S1 = 4 * S2 + 3 * S3;
     # S2 = 2 * S3
@@ -133,7 +169,6 @@ class TestBom(unittest.TestCase):
     # S1   0           1
     # S2   2           2
     # S3   7           0
-
     def test_nested(self):
         s3 = Product('s3', type='stock', on_hand=7.0)
         s2 = Product('s2', type='stock', on_hand=2.0)
@@ -187,6 +222,18 @@ class TestBom(unittest.TestCase):
         s4.components = {s5: 1.0, c1: 2.0}
         s1.manufacture_qty = compute_manufacture_qty(s1)
         self.assertEqual(s1.manufacture_qty, 1)
+
+    # S1 is made of S2; S2 has a lot of on hand
+    #      on hand     manufacture
+    # S1   0           100000
+    # S2   100000      0
+    def test_runtime(self):
+        s2 = Product('s2', type='stock', on_hand=100000.0)
+        s1 = Product('s1', type='stock')
+        s1.components = {s2: 1.0}
+        s1.manufacture_qty = compute_manufacture_qty(s1)
+        self.assertEqual(s1.manufacture_qty, 100000.0)
+
 
 if __name__ == '__main__':
     unittest.main()
